@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Racer</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+    canvas { display: block; }
+    #hud  { position: fixed; top: 16px; left: 16px; color: #fff;
+            text-shadow: 0 1px 4px rgba(0,0,0,.9); pointer-events: none; user-select: none; }
+    #speed    { font-size: 26px; font-weight: bold; letter-spacing: 1px; }
+    #balloons { font-size: 15px; color: #aaddff; margin-top: 6px; letter-spacing: 1px; }
+    #timer    { font-size: 13px; color: #88ff88; margin-top: 4px; letter-spacing: 1px; }
+    #status   { font-size: 12px; color: #ffcc00; margin-top: 5px; min-height: 16px; }
+    #title  { position: fixed; top: 16px; right: 18px; color: rgba(255,255,255,.28);
+              font-size: 22px; font-style: italic; letter-spacing: 3px; pointer-events: none; }
+    #hint   { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+              color: rgba(255,255,255,.40); font-size: 11px;
+              pointer-events: none; white-space: nowrap; }
+    #finish { display: none; position: fixed; inset: 0;
+              background: rgba(0,0,0,.78);
+              flex-direction: column; align-items: center; justify-content: center;
+              z-index: 10; pointer-events: none;
+              font-family: 'Courier New', monospace;
+              text-shadow: 0 2px 24px rgba(0,0,0,.95); }
+    #finish-title { font-size: 76px; font-weight: bold; color: #ffee00;
+                    letter-spacing: 10px; animation: pulse 1s ease-in-out infinite alternate; }
+    #finish-time  { font-size: 52px; color: #ffffff; margin-top: 22px; letter-spacing: 4px; }
+    #finish-label { font-size: 14px; color: #888; margin-top: 10px; letter-spacing: 4px; text-transform: uppercase; }
+    #finish-sub   { font-size: 16px; color: #aaddff; margin-top: 28px; letter-spacing: 2px; }
+    @keyframes pulse {
+      from { text-shadow: 0 0 20px #ff8800, 0 2px 24px rgba(0,0,0,.95); }
+      to   { text-shadow: 0 0 60px #ffcc00, 0 2px 24px rgba(0,0,0,.95); }
+    }
+    /* ── Start screen ───────────────────────────────────────────────────────── */
+    #start { position: fixed; inset: 0; background: rgba(0,0,5,.93);
+             display: flex; flex-direction: column; align-items: center; justify-content: center;
+             z-index: 20; font-family: 'Courier New', monospace; }
+    #start-logo  { font-size: 68px; font-weight: bold; color: #ffee00; letter-spacing: 8px;
+                   text-align: center;
+                   animation: pulse 1.2s ease-in-out infinite alternate; }
+    #start-sub   { font-size: 15px; color: #888; margin-top: 14px; letter-spacing: 3px; }
+    #start-btns  { display: flex; gap: 28px; margin-top: 52px; }
+    .diff-btn    { background: none; border: 2px solid; border-radius: 4px;
+                   padding: 20px 36px; cursor: pointer;
+                   font-family: 'Courier New', monospace; font-size: 20px;
+                   font-weight: bold; letter-spacing: 2px;
+                   transition: background .15s, transform .12s; }
+    .diff-btn:hover  { transform: scale(1.08); }
+    .diff-btn:active { transform: scale(0.96); }
+    .diff-sub    { display: block; font-size: 11px; font-weight: normal;
+                   opacity: .65; margin-top: 7px; letter-spacing: 1px; }
+    #btn-easy    { color: #44dd44; border-color: #44dd44; }
+    #btn-easy:hover   { background: rgba(68,221,68,.14); }
+    #btn-medium  { color: #ffbb00; border-color: #ffbb00; }
+    #btn-medium:hover { background: rgba(255,187,0,.14); }
+    #btn-hard    { color: #ff4444; border-color: #ff4444; }
+    #btn-hard:hover   { background: rgba(255,68,68,.14); }
+    /* ── Lost screen ────────────────────────────────────────────────────────── */
+    #lost { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.82);
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10; font-family: 'Courier New', monospace;
+            text-shadow: 0 2px 24px rgba(0,0,0,.95); }
+    #lost-title  { font-size: 76px; font-weight: bold; color: #ff3333;
+                   letter-spacing: 10px; animation: pulse-red 1s ease-in-out infinite alternate; }
+    #lost-sub    { font-size: 22px; color: #fff; margin-top: 20px; letter-spacing: 2px; }
+    #lost-detail { font-size: 15px; color: #aaa; margin-top: 10px; letter-spacing: 2px; }
+    .replay-btn  { margin-top: 40px; background: none; border: 2px solid #fff; border-radius: 4px;
+                   padding: 14px 40px; color: #fff; font-family: 'Courier New', monospace;
+                   font-size: 16px; letter-spacing: 3px; cursor: pointer;
+                   transition: background .15s, transform .12s; }
+    .replay-btn:hover  { background: rgba(255,255,255,.12); transform: scale(1.07); }
+    .replay-btn:active { transform: scale(0.96); }
+    #timer.danger { color: #ff4444; }
+    @keyframes pulse-red {
+      from { text-shadow: 0 0 20px #cc0000, 0 2px 24px rgba(0,0,0,.95); }
+      to   { text-shadow: 0 0 60px #ff6666, 0 2px 24px rgba(0,0,0,.95); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="hud">
+  <div id="speed">0 km/h</div>
+  <div id="balloons">Balloons: 0 / 20</div>
+  <div id="timer">0:00.0</div>
+  <div id="status"></div>
+</div>
+<div id="title">RACER</div>
+<div id="hint">W / &#x2191; Accelerate &nbsp;&middot;&nbsp; S / &#x2193; Brake / Rev &nbsp;&middot;&nbsp; A / &#x2190; D / &#x2192; Steer &nbsp;&middot;&nbsp; SPACE Handbrake &nbsp;&middot;&nbsp; R Reset</div>
+
+<div id="finish">
+  <div id="finish-title">FINISH!</div>
+  <div id="finish-time">0:00.0</div>
+  <div id="finish-label">your time</div>
+  <div id="finish-sub"></div>
+  <button class="replay-btn" onclick="tryAgain()">PLAY AGAIN</button>
+</div>
+
+<div id="lost">
+  <div id="lost-title">TIME UP!</div>
+  <div id="lost-sub">You ran out of time</div>
+  <div id="lost-detail"></div>
+  <button class="replay-btn" onclick="tryAgain()">TRY AGAIN</button>
+</div>
+
+<div id="start">
+  <div id="start-logo">RACER</div>
+  <div id="start-sub">collect all balloons &mdash; fastest time wins</div>
+  <div id="start-btns">
+    <button class="diff-btn" id="btn-easy"   onclick="startGame(10)">EASY<span   class="diff-sub">10 balloons</span></button>
+    <button class="diff-btn" id="btn-medium" onclick="startGame(20)">MEDIUM<span class="diff-sub">20 balloons</span></button>
+    <button class="diff-btn" id="btn-hard"   onclick="startGame(30)">HARD<span   class="diff-sub">30 balloons</span></button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
+const WORLD_SIZE = 400;
+const WORLD_SEGS = 127;          // 128 × 128 vertices
+const WORLD_HALF = WORLD_SIZE / 2;
+const CELL       = WORLD_SIZE / WORLD_SEGS;
+const W_RADIUS   = 0.52;   // bigger buggy tires
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  RENDERER / SCENE / CAMERA
+// ═══════════════════════════════════════════════════════════════════════════════
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x88c8e8);
+scene.fog = new THREE.Fog(0x88c8e8, 90, 280);
+
+const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 500);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  LIGHTS
+// ═══════════════════════════════════════════════════════════════════════════════
+scene.add(new THREE.AmbientLight(0xffffff, 0.50));
+scene.add(new THREE.HemisphereLight(0x88ccee, 0x44661a, 0.32));
+
+const sun = new THREE.DirectionalLight(0xfff0cc, 1.05);
+sun.position.set(120, 200, 90);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = sun.shadow.camera.bottom = -210;
+sun.shadow.camera.right = sun.shadow.camera.top = 210;
+sun.shadow.camera.far = 600;
+scene.add(sun);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  TERRAIN HEIGHT FUNCTION
+//  Layered sine waves + edge-bowl (mountains at boundary to keep car inside map)
+//  Random phase offsets give a different landscape every page load.
+// ═══════════════════════════════════════════════════════════════════════════════
+const _tp = Array.from({length: 7}, () => Math.random() * Math.PI * 2);
+
+function terrH(x, z) {
+  const d    = Math.sqrt(x * x + z * z) / WORLD_HALF;
+  const edge = Math.max(0, (d - 0.72) * 40);
+  return (
+    Math.sin(x * 0.018 + _tp[0]) * 9  +
+    Math.cos(z * 0.022 + _tp[1]) * 7  +
+    Math.sin(x * 0.044 + z * 0.037 + _tp[2]) * 5 +
+    Math.cos(x * 0.071 - z * 0.064 + _tp[3]) * 3 +
+    Math.sin(x * 0.11  + z * 0.095 + _tp[4]) * 2 +
+    Math.cos(x * 0.17  - z * 0.16  + _tp[5]) * 1 +
+    Math.sin(x * 0.28  + z * 0.24  + _tp[6]) * 0.5 +
+    edge
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  THREE.JS TERRAIN MESH — flat-shaded for retro polygon look
+// ═══════════════════════════════════════════════════════════════════════════════
+const tGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, WORLD_SEGS, WORLD_SEGS);
+tGeo.rotateX(-Math.PI / 2);
+
+const tPos = tGeo.attributes.position;
+for (let i = 0; i < tPos.count; i++) tPos.setY(i, terrH(tPos.getX(i), tPos.getZ(i)));
+tPos.needsUpdate = true;
+
+// Find actual terrain height range so colour bands are relative to real data
+let terrMinY = Infinity, terrMaxY = -Infinity;
+for (let i = 0; i < tPos.count; i++) {
+  const y = tPos.getY(i);
+  if (y < terrMinY) terrMinY = y;
+  if (y > terrMaxY) terrMaxY = y;
+}
+const terrRangeY = terrMaxY - terrMinY;
+
+// Split shared vertices so every triangle is independent → hard edges / flat faces
+const flatGeo = tGeo.toNonIndexed();
+flatGeo.computeVertexNormals();   // normals are now per-face (same for all 3 verts in a tri)
+
+// 4 discrete colour levels by height with fuzzy borders:
+//   ~0 – 0.40  dark green (low grass)
+//   ~0.40 – 0.60  light green (high grass)
+//   ~0.60 – 0.85  brown (rocky soil)
+//   ~0.85 – 1.00  white (snow)
+// Each threshold is perturbed by a different position-based noise term so the
+// boundaries wiggle naturally instead of cutting across a flat height line.
+function terrainColor(t, cx, cz) {
+  // Three independent noise values, one per boundary — amplitude ±0.055
+  const f1 = Math.sin(cx * 0.73 + cz * 0.51) * Math.cos(cx * 0.37 - cz * 0.29) * 0.055;
+  const f2 = Math.cos(cx * 0.61 - cz * 0.83) * Math.sin(cx * 0.22 + cz * 0.47) * 0.055;
+  const f3 = Math.sin(cx * 0.44 + cz * 0.66) * Math.cos(cx * 0.55 - cz * 0.38) * 0.055;
+
+  if (t < 0.40 + f1) {
+    const n = Math.sin(cx * 0.31 + cz * 0.17) * 0.04;
+    return [0.18 + n, 0.44 + n, 0.11 + n];   // dark green
+  }
+  if (t < 0.60 + f2) {
+    const n = Math.cos(cx * 0.19 - cz * 0.27) * 0.04;
+    return [0.28 + n, 0.58 + n, 0.18 + n];   // light green
+  }
+  if (t < 0.85 + f3) {
+    return [0.48, 0.34, 0.16];               // brown
+  }
+  return [0.92, 0.93, 0.96];                 // snow
+}
+
+// Assign one solid colour per triangle (all 3 vertices get the same colour)
+const fPos = flatGeo.attributes.position;
+const fCol = new Float32Array(fPos.count * 3);
+for (let i = 0; i < fPos.count; i += 3) {
+  const cx = (fPos.getX(i) + fPos.getX(i + 1) + fPos.getX(i + 2)) / 3;
+  const cy = (fPos.getY(i) + fPos.getY(i + 1) + fPos.getY(i + 2)) / 3;
+  const cz = (fPos.getZ(i) + fPos.getZ(i + 1) + fPos.getZ(i + 2)) / 3;
+  const t    = (cy - terrMinY) / terrRangeY;
+  const dark = 0.75 + 0.25 * t;   // subtle valley darkening
+  const [r, g, b] = terrainColor(t, cx, cz);
+  for (let j = 0; j < 3; j++) {
+    fCol[(i + j) * 3]     = Math.max(0, r) * dark;
+    fCol[(i + j) * 3 + 1] = Math.max(0, g) * dark;
+    fCol[(i + j) * 3 + 2] = Math.max(0, b) * dark;
+  }
+}
+flatGeo.setAttribute('color', new THREE.BufferAttribute(fCol, 3));
+
+const terrainMesh = new THREE.Mesh(flatGeo, new THREE.MeshLambertMaterial({ vertexColors: true }));
+terrainMesh.receiveShadow = true;
+scene.add(terrainMesh);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  BOUNDARY WALLS — translucent red planes at the collision edges
+// ═══════════════════════════════════════════════════════════════════════════════
+const WALL_LIM    = WORLD_HALF * 0.91;   // must match the clamp limit in updateCar
+const WALL_HEIGHT = 8;
+const WALL_SEGS   = 80;
+
+// Build a terrain-hugging wall strip: bottom vertices follow terrH(), top is +WALL_HEIGHT above.
+function buildWallGeo(segs, height, sampleFn) {
+  const pos = [];
+  for (let i = 0; i <= segs; i++) {
+    const [x, gy, z] = sampleFn(i / segs);
+    pos.push(x, gy - 0.3, z);          // bottom — dip 0.3 m below terrain to hide the seam
+    pos.push(x, gy + height, z);        // top
+  }
+  const idx = [];
+  for (let i = 0; i < segs; i++) {
+    const v = i * 2;
+    idx.push(v, v + 2, v + 1,   v + 2, v + 3, v + 1);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setIndex(idx);
+  return geo;
+}
+
+const wallMat = new THREE.MeshBasicMaterial({
+  color: 0xff1111, transparent: true, opacity: 0.30,
+  side: THREE.DoubleSide, depthWrite: false,
+});
+
+// One sample function per side; t ∈ [0,1] runs along the wall's length
+[
+  t => { const x = WALL_LIM * (t * 2 - 1); return [x, terrH(x, +WALL_LIM), +WALL_LIM]; },  // North
+  t => { const x = WALL_LIM * (t * 2 - 1); return [x, terrH(x, -WALL_LIM), -WALL_LIM]; },  // South
+  t => { const z = WALL_LIM * (t * 2 - 1); return [+WALL_LIM, terrH(+WALL_LIM, z), z]; },  // East
+  t => { const z = WALL_LIM * (t * 2 - 1); return [-WALL_LIM, terrH(-WALL_LIM, z), z]; },  // West
+].forEach(fn => {
+  const m = new THREE.Mesh(buildWallGeo(WALL_SEGS, WALL_HEIGHT, fn), wallMat);
+  m.renderOrder = 1;
+  scene.add(m);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  BALLOONS — collect them all
+// ═══════════════════════════════════════════════════════════════════════════════
+let BALLOON_COUNT  = 0;
+const BALLOON_RADIUS = 1.2;
+const COLLECT_DIST   = 3.0;   // car centre → balloon centre trigger (m)
+const BALLOON_COLORS = [0xff3333, 0xff8800, 0xffee00, 0x33dd55, 0x3399ff, 0xcc44ff, 0xff66bb];
+
+// Seeded RNG — reset before each spawn so positions are deterministic
+let _bseed = 98237;
+const brnd = () => {
+  _bseed ^= _bseed << 13; _bseed ^= _bseed >> 17; _bseed ^= _bseed << 5;
+  return (_bseed >>> 0) / 0x100000000;
+};
+
+const balloons  = [];
+const particles = [];
+let   collected = 0;
+let   gameTime  = 0;
+let   gameStarted = false;
+
+// Shared string geometry (thin vertical cylinder beneath each balloon)
+const _strGeo = new THREE.CylinderGeometry(0.05, 0.05, 1.8, 5);
+const _strMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+function spawnBalloons(count) {
+  // Clear any leftover balloons from a previous run
+  balloons.forEach(b => scene.remove(b.group));
+  balloons.length = 0;
+  collected = 0;
+  _bseed = 98237;   // reset RNG so positions are consistent per difficulty
+
+  for (let i = 0; i < count; i++) {
+    let bx, bz;
+    do {
+      bx = (brnd() - 0.5) * WORLD_SIZE * 0.78;
+      bz = (brnd() - 0.5) * WORLD_SIZE * 0.78;
+    } while (Math.sqrt(bx * bx + bz * bz) < 22);
+
+    const ground = terrH(bx, bz);
+    const color  = BALLOON_COLORS[i % BALLOON_COLORS.length];
+
+    const ballGeo  = new THREE.SphereGeometry(BALLOON_RADIUS, 10, 8);
+    const ballMat  = new THREE.MeshLambertMaterial({ color });
+    const ballMesh = new THREE.Mesh(ballGeo, ballMat);
+    ballMesh.castShadow = true;
+
+    const strMesh = new THREE.Mesh(_strGeo, _strMat);
+    strMesh.position.y = -BALLOON_RADIUS - 0.9;
+
+    const group = new THREE.Group();
+    group.add(ballMesh);
+    group.add(strMesh);
+    const baseY = ground + BALLOON_RADIUS + 2.0;
+    group.position.set(bx, baseY, bz);
+    scene.add(group);
+
+    balloons.push({
+      group, x: bx, z: bz, baseY, color,
+      bobSpeed: 0.9 + brnd() * 0.8,
+      bobPhase: brnd() * Math.PI * 2,
+      active: true,
+    });
+  }
+}
+
+function explodeBalloon(b) {
+  b.active = false;
+  scene.remove(b.group);
+  collected++;
+  if (collected === BALLOON_COUNT && !finished) {
+    finished = true;
+    const elapsed = (performance.now() - startTime) / 1000;
+    showFinish(elapsed);
+  }
+
+  // Burst: 16 coloured shards flying outward
+  for (let i = 0; i < 16; i++) {
+    const pMat  = new THREE.MeshBasicMaterial({ color: b.color });
+    const pMesh = new THREE.Mesh(new THREE.SphereGeometry(0.12 + brnd() * 0.18, 4, 3), pMat);
+    pMesh.position.copy(b.group.position);
+    scene.add(pMesh);
+
+    const theta = brnd() * Math.PI * 2;
+    const phi   = (brnd() - 0.5) * Math.PI;
+    const spd   = 6 + brnd() * 9;
+    const life  = 0.35 + brnd() * 0.3;
+    particles.push({
+      mesh: pMesh,
+      vx: Math.cos(theta) * Math.cos(phi) * spd,
+      vy: Math.abs(Math.sin(phi)) * spd + 2,
+      vz: Math.sin(theta) * Math.cos(phi) * spd,
+      life, maxLife: life,
+    });
+  }
+}
+
+function updateBalloons(dt) {
+  gameTime += dt;
+
+  for (const b of balloons) {
+    if (!b.active) continue;
+    // Gentle bobbing
+    b.group.position.y = b.baseY + Math.sin(gameTime * b.bobSpeed + b.bobPhase) * 0.35;
+    // Collision with car
+    const dx = P.x - b.x;
+    const dy = P.y - b.group.position.y;
+    const dz = P.z - b.z;
+    if (dx * dx + dy * dy + dz * dz < (COLLECT_DIST + BALLOON_RADIUS) ** 2) {
+      explodeBalloon(b);
+    }
+  }
+
+  // Animate burst particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.life -= dt;
+    if (p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); continue; }
+    p.vy -= 20 * dt;
+    p.mesh.position.x += p.vx * dt;
+    p.mesh.position.y += p.vy * dt;
+    p.mesh.position.z += p.vz * dt;
+    p.mesh.scale.setScalar(p.life / p.maxLife);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  BUGGY — VISUAL
+// ═══════════════════════════════════════════════════════════════════════════════
+const carGroup = new THREE.Group();
+scene.add(carGroup);
+
+// Convenience: add a coloured box part to carGroup
+const _matCache = {};
+function addPart(w, h, d, x, y, z, color) {
+  if (!_matCache[color]) _matCache[color] = new THREE.MeshLambertMaterial({ color });
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), _matCache[color]);
+  m.position.set(x, y, z);
+  m.castShadow = true;
+  carGroup.add(m);
+}
+
+const C_BODY  = 0xdd4400;   // deep orange
+const C_CAGE  = 0xddaa00;   // gold roll-cage tubes
+const C_DARK  = 0x222222;   // dark frame / skid / bumpers
+const C_ENG   = 0x445566;   // engine / mechanical parts
+
+// ── Chassis ──────────────────────────────────────────────────────────────────
+addPart(2.30, 0.18, 3.80,  0,  0.00,  0.00, C_BODY);   // main plate
+addPart(2.00, 0.10, 3.40,  0, -0.12,  0.00, C_DARK);   // skid plate (underside)
+
+// ── Driver tub ───────────────────────────────────────────────────────────────
+addPart(1.55, 0.30, 1.70,  0,  0.22,  0.10, C_BODY);
+
+// ── Front hood ───────────────────────────────────────────────────────────────
+addPart(1.45, 0.20, 0.95,  0,  0.22,  1.55, C_BODY);
+
+// ── Rear engine bay ──────────────────────────────────────────────────────────
+addPart(1.20, 0.45, 1.10,  0,  0.28, -1.30, C_ENG);    // engine block
+addPart(0.50, 0.25, 0.40,  0,  0.65, -1.30, C_DARK);   // air-intake box on top
+
+// ── Roll cage ────────────────────────────────────────────────────────────────
+// Four vertical pillars (front & rear, left & right)
+const T  = 0.09;   // tube cross-section
+const CH = 1.20;   // cage height
+const CM = 0.10 + CH / 2;   // pillar Y centre
+const CT = 0.10 + CH;       // pillar top Y
+const CX = 0.92;             // half track-width of cage
+const CZF =  0.92;           // front pillar Z
+const CZR = -0.82;           // rear  pillar Z
+
+addPart(T, CH, T, -CX, CM, CZF, C_CAGE);
+addPart(T, CH, T,  CX, CM, CZF, C_CAGE);
+addPart(T, CH, T, -CX, CM, CZR, C_CAGE);
+addPart(T, CH, T,  CX, CM, CZR, C_CAGE);
+
+// Side rails along the top (front-to-rear, left & right)
+const railLen = Math.abs(CZF - CZR) + T;
+addPart(T, T, railLen, -CX, CT - T / 2, (CZF + CZR) / 2, C_CAGE);
+addPart(T, T, railLen,  CX, CT - T / 2, (CZF + CZR) / 2, C_CAGE);
+
+// Cross bars at top (front, middle, rear)
+const barW = CX * 2 + T;
+addPart(barW, T, T, 0, CT - T / 2, CZF, C_CAGE);
+addPart(barW, T, T, 0, CT - T / 2, (CZF + CZR) / 2, C_CAGE);
+addPart(barW, T, T, 0, CT - T / 2, CZR, C_CAGE);
+
+// ── Bumpers ───────────────────────────────────────────────────────────────────
+// Front: horizontal bar + two stub legs
+addPart(2.45, 0.14, 0.14,  0,  -0.03,  2.08, C_DARK);
+addPart(0.13, 0.50, 0.13, -0.90, 0.05, 2.08, C_DARK);
+addPart(0.13, 0.50, 0.13,  0.90, 0.05, 2.08, C_DARK);
+// Rear bash bar
+addPart(2.45, 0.14, 0.14,  0,  -0.03, -2.08, C_DARK);
+
+// ── Wheels ────────────────────────────────────────────────────────────────────
+// Bigger, wider tyres with aggressive hex rims
+const tireGeo = new THREE.CylinderGeometry(W_RADIUS, W_RADIUS, 0.44, 14);
+tireGeo.rotateZ(Math.PI / 2);
+const rimGeo  = new THREE.CylinderGeometry(W_RADIUS * 0.50, W_RADIUS * 0.52, 0.46, 6);
+rimGeo.rotateZ(Math.PI / 2);
+const tireMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+const rimMat  = new THREE.MeshLambertMaterial({ color: 0x888899 });
+
+const wMeshes = [];
+for (let i = 0; i < 4; i++) {
+  const wg = new THREE.Group();
+  wg.add(new THREE.Mesh(tireGeo, tireMat));
+  wg.add(new THREE.Mesh(rimGeo,  rimMat));
+  wg.castShadow = true;
+  scene.add(wg);
+  wMeshes.push(wg);
+}
+
+// Wheel attachment offsets (car-local space) — wider track, bigger clearance
+const WHEEL_OFFSETS = [
+  new THREE.Vector3(-1.18, -0.30,  1.72),   // front-left
+  new THREE.Vector3( 1.18, -0.30,  1.72),   // front-right
+  new THREE.Vector3(-1.18, -0.30, -1.72),   // rear-left
+  new THREE.Vector3( 1.18, -0.30, -1.72),   // rear-right
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CAR PHYSICS — CUSTOM (no physics library)
+//
+//  Position, yaw, pitch, roll + forward speed + vertical velocity.
+//  Terrain height is queried via terrH() each frame — no heightfield body needed.
+//  Slope decelerates the car on climbs and accelerates it on descents.
+// ═══════════════════════════════════════════════════════════════════════════════
+const P = {
+  x:    0,
+  y:    terrH(0, 0) + 1.0,
+  z:    0,
+  yaw:  0,          // heading (rad), 0 = +Z, increases counter-clockwise
+  pitch: 0,         // nose-up angle (rad)
+  roll:  0,         // right-bank angle (rad)
+  speed: 0,         // forward speed m/s (+forward / −reverse)
+  vy:    0,         // vertical velocity m/s
+  wheelRot:   0,    // cumulative wheel spin (rad)
+  steerAngle: 0,    // current front-wheel angle (rad)
+  onGround:   true,
+};
+
+// Tuning constants
+const ACC   = 18;    // m/s² forward thrust
+const ACC_R = 10;    // m/s² reverse thrust
+const FRIC  =  5;    // m/s² rolling resistance
+const HBRK  = 42;    // m/s² handbrake
+const MAXF  = 28;    // m/s  top forward speed (~100 km/h)
+const MAXR  = 10;    // m/s  max reverse speed
+const GRAV  = 20;    // m/s²
+const MAX_STEER = 0.52;  // rad
+
+let resetCooldown = 0;
+
+// Reusable objects for wheel sync (avoid per-frame GC)
+const _wRollAxis  = new THREE.Vector3(1, 0, 0);
+const _wSteerAxis = new THREE.Vector3(0, 1, 0);
+const _wRollQ     = new THREE.Quaternion();
+const _wSteerQ    = new THREE.Quaternion();
+const _wQ         = new THREE.Quaternion();   // scratch quaternion for wheel orientation
+const _wOffset    = new THREE.Vector3();
+const _carEuler   = new THREE.Euler(0, 0, 0, 'YXZ');
+
+function updateCar(dt) {
+  const fwd   = keys['KeyW'] || keys['ArrowUp'];
+  const bwd   = keys['KeyS'] || keys['ArrowDown'];
+  const left  = keys['KeyA'] || keys['ArrowLeft'];
+  const right = keys['KeyD'] || keys['ArrowRight'];
+  const space = keys['Space'];
+
+  // ── throttle / coast / brake ──────────────────────────────────────────────
+  if (fwd)  P.speed = Math.min(P.speed + ACC   * dt, MAXF);
+  if (bwd)  P.speed = Math.max(P.speed - ACC_R * dt, -MAXR);
+  if (!fwd && !bwd || space) {
+    const dec = (space ? HBRK : FRIC) * dt;
+    if (Math.abs(P.speed) <= dec) P.speed = 0;
+    else P.speed -= Math.sign(P.speed) * dec;
+  }
+
+  // ── steering ─────────────────────────────────────────────────────────────
+  // Wheel angle builds up then self-centres; rate tapers off at speed
+  const steerRate = 2.2 * Math.min(Math.abs(P.speed) / 4, 1) * dt;
+  const steerMax  = Math.max(0.15, MAX_STEER - Math.abs(P.speed) * 0.01);
+  if (left)  P.steerAngle = Math.min(P.steerAngle + steerRate, steerMax);
+  if (right) P.steerAngle = Math.max(P.steerAngle - steerRate, -steerMax);
+  if (!left && !right) {
+    const ctr = 2.5 * dt;
+    if (Math.abs(P.steerAngle) <= ctr) P.steerAngle = 0;
+    else P.steerAngle -= Math.sign(P.steerAngle) * ctr;
+  }
+
+  // ── yaw from steering (Ackermann-ish) ────────────────────────────────────
+  if (Math.abs(P.speed) > 0.05) {
+    P.yaw += (P.speed / 3.0) * P.steerAngle * dt;
+  }
+
+  // ── horizontal movement ───────────────────────────────────────────────────
+  const sinY = Math.sin(P.yaw);
+  const cosY = Math.cos(P.yaw);
+  P.x += sinY * P.speed * dt;
+  P.z += cosY * P.speed * dt;
+
+  // clamp to map — slide along boundary walls
+  // Instead of negating full speed, cancel only the component going into the wall
+  // and keep the parallel component so the car slides naturally.
+  const lim = WORLD_HALF * 0.91;
+  let hitX = false, hitZ = false;
+  if (P.x < -lim) { P.x = -lim; hitX = true; }
+  if (P.x >  lim) { P.x =  lim; hitX = true; }
+  if (P.z < -lim) { P.z = -lim; hitZ = true; }
+  if (P.z >  lim) { P.z =  lim; hitZ = true; }
+  if (hitX || hitZ) {
+    // sinY / cosY are the X and Z fractions of the car's forward vector.
+    // Zero out whichever axis hit a wall, keep the other.
+    const vx = hitX ? 0 : P.speed * sinY;
+    const vz = hitZ ? 0 : P.speed * cosY;
+    // Reconstruct scalar speed from the surviving component (0.85 = light wall friction)
+    P.speed = Math.sqrt(vx * vx + vz * vz) * Math.sign(P.speed || 1) * 0.85;
+  }
+
+  // ── vertical / terrain ───────────────────────────────────────────────────
+  // groundY = terrain + wheel_radius + |wheel_y_offset| so bottom of wheel touches terrain
+  const groundY = terrH(P.x, P.z) + W_RADIUS - WHEEL_OFFSETS[0].y;
+
+  // Always integrate gravity so falling and jumping work correctly.
+  P.vy -= GRAV * dt;
+  P.y  += P.vy * dt;
+
+  const aboveGround = P.y - groundY;
+
+  // Grounding test:
+  //   ① Car is at or below terrain — snap up (prevents sinking on upslopes)
+  //   ② Car is within 1.5 m of terrain AND descending — snap down (follows downslopes)
+  //   The 1.5 m threshold handles the steepest smooth slopes at max speed without
+  //   preventing genuine airborne launches from cliffs (those drop > 1.5 m instantly).
+  if (aboveGround <= 0 || (aboveGround < 1.5 && P.vy <= 0)) {
+    P.y  = groundY;
+    P.vy = 0;
+    P.onGround = true;
+
+    // Slope gravity: sample 2 m ahead + behind for a stable reading.
+    // uphill → decelerates, downhill → accelerates.
+    // Coefficient 0.60 ≈ 2.4× physical gravity along slope — exaggerated for fun.
+    const fH = terrH(P.x + sinY * 2, P.z + cosY * 2);
+    const bH = terrH(P.x - sinY * 2, P.z - cosY * 2);
+    let slopeAccel = (bH - fH) * GRAV * 0.60;
+    // When throttle is held going uphill the slope can fight the engine hard but
+    // cannot fully overcome it — car always crawls forward, never stalls.
+    if (fwd && slopeAccel < 0) slopeAccel = Math.max(slopeAccel, -ACC * 0.82);
+    if (bwd && slopeAccel > 0) slopeAccel = Math.min(slopeAccel,  ACC_R * 0.82);
+    P.speed += slopeAccel * dt;
+    // Downhill cap: allow up to 1.5× top speed, but no more
+    P.speed = Math.max(-(MAXR * 1.4), Math.min(P.speed, MAXF * 1.5));
+  } else {
+    P.onGround = false;
+  }
+
+  // ── terrain-following orientation ─────────────────────────────────────────
+  if (P.onGround) {
+    const eps = 0.8;
+    const gx = (terrH(P.x + eps, P.z)       - terrH(P.x - eps, P.z))       / (2 * eps);
+    const gz = (terrH(P.x,       P.z + eps) - terrH(P.x,       P.z - eps)) / (2 * eps);
+    // Target pitch/roll from terrain gradient, smoothly followed
+    const tPitch = Math.atan(-(gx * sinY + gz * cosY));
+    const tRoll  = Math.atan( (gx * cosY - gz * sinY));
+    P.pitch += (tPitch - P.pitch) * Math.min(1, 12 * dt);
+    P.roll  += (tRoll  - P.roll)  * Math.min(1, 12 * dt);
+  } else {
+    // Airborne: preserve the launch angle, gradually return to level (~0.4 s half-life)
+    const decay = Math.pow(0.15, dt);
+    P.pitch *= decay;
+    P.roll  *= decay;
+  }
+
+  // ── wheel spin ────────────────────────────────────────────────────────────
+  P.wheelRot += (P.speed / W_RADIUS) * dt;
+
+  // ── reset ─────────────────────────────────────────────────────────────────
+  resetCooldown -= dt;
+  if (keys['KeyR'] && resetCooldown <= 0) {
+    resetCooldown = 0.5;
+    P.speed = 0; P.vy = 0; P.pitch = 0; P.roll = 0;
+    P.y = terrH(P.x, P.z) + 1.5;
+  }
+
+  // ── sync car group ────────────────────────────────────────────────────────
+  carGroup.position.set(P.x, P.y, P.z);
+  _carEuler.set(P.pitch, P.yaw, P.roll);
+  carGroup.quaternion.setFromEuler(_carEuler);
+
+  // ── sync wheel meshes ─────────────────────────────────────────────────────
+  _wRollQ.setFromAxisAngle(_wRollAxis, P.wheelRot);
+  _wSteerQ.setFromAxisAngle(_wSteerAxis, P.steerAngle);
+
+  for (let i = 0; i < 4; i++) {
+    // Wheel position: purely derived from car body transform.
+    // No per-wheel terrain snap — that detaches wheels from the car on slopes.
+    _wOffset.copy(WHEEL_OFFSETS[i]).applyQuaternion(carGroup.quaternion).add(carGroup.position);
+    wMeshes[i].position.copy(_wOffset);
+
+    // Orientation: carQ × steerQ (front only) × rollQ
+    // Steer must come BEFORE roll so the spin axis follows the steered direction.
+    _wQ.copy(carGroup.quaternion);
+    if (i < 2) _wQ.multiply(_wSteerQ);
+    _wQ.multiply(_wRollQ);
+    wMeshes[i].quaternion.copy(_wQ);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  INPUT
+// ═══════════════════════════════════════════════════════════════════════════════
+const keys = Object.create(null);
+window.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))
+    e.preventDefault();
+});
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CAMERA — smooth third-person follow
+// ═══════════════════════════════════════════════════════════════════════════════
+const camPos    = new THREE.Vector3(0, 10, -20);
+const camLook   = new THREE.Vector3();
+// Camera sits further back/up so small car movements look less violent
+const _cOff     = new THREE.Vector3(0,   5.0, -13.0);
+const _lOff     = new THREE.Vector3(0,   0.8,   5.0);
+const _cWant    = new THREE.Vector3();
+const _lWant    = new THREE.Vector3();
+const _camYawQ  = new THREE.Quaternion();   // yaw-only — camera doesn't tilt with the car
+const _camYawE  = new THREE.Euler(0, 0, 0, 'YXZ');
+
+function updateCamera(dt) {
+  // Build a rotation that matches only the car's yaw (no pitch / roll).
+  // This prevents the camera from bobbing up/down with terrain slope.
+  _camYawE.set(0, P.yaw, 0);
+  _camYawQ.setFromEuler(_camYawE);
+
+  _cWant.copy(_cOff).applyQuaternion(_camYawQ).add(carGroup.position);
+  const minY = terrH(_cWant.x, _cWant.z) + 1.5;
+  if (_cWant.y < minY) _cWant.y = minY;
+
+  // Framerate-independent exponential decay: factor = 1 − e^(−speed × dt)
+  // Position lags more (speed 2.5) so the camera floats behind the car.
+  // Look-target is tighter (speed 5.0) so the car stays in frame even while turning.
+  const posF  = 1 - Math.exp(-2.5 * dt);
+  const lookF = 1 - Math.exp(-5.0 * dt);
+
+  camPos.lerp(_cWant, posF);
+
+  _lWant.copy(_lOff).applyQuaternion(_camYawQ).add(carGroup.position);
+  camLook.lerp(_lWant, lookF);
+
+  camera.position.copy(camPos);
+  camera.lookAt(camLook);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  HUD
+// ═══════════════════════════════════════════════════════════════════════════════
+const $spd    = document.getElementById('speed');
+const $bal    = document.getElementById('balloons');
+const $tmr    = document.getElementById('timer');
+const $sts    = document.getElementById('status');
+const $finish = document.getElementById('finish');
+const $lost   = document.getElementById('lost');
+const _upV    = new THREE.Vector3();
+
+const TIME_LIMIT = 120;   // seconds
+
+function formatTime(s) {
+  const m  = Math.floor(s / 60);
+  const ss = Math.floor(s % 60);
+  const ds = Math.floor((s % 1) * 10);
+  return `${m}:${String(ss).padStart(2, '0')}.${ds}`;
+}
+
+function showFinish(elapsedSec) {
+  document.getElementById('finish-time').textContent = formatTime(elapsedSec);
+  document.getElementById('finish-sub').textContent  = `all ${BALLOON_COUNT} balloons collected`;
+  $finish.style.display = 'flex';
+}
+
+function showLost() {
+  document.getElementById('lost-detail').textContent =
+    `${collected} of ${BALLOON_COUNT} balloons collected`;
+  $lost.style.display = 'flex';
+}
+
+function startGame(count) {
+  BALLOON_COUNT = count;
+  spawnBalloons(count);
+  finished    = false;
+  gameStarted = true;
+  startTime   = performance.now();
+  $finish.style.display = 'none';
+  $lost.style.display   = 'none';
+  $tmr.classList.remove('danger');
+  document.getElementById('start').style.display = 'none';
+}
+
+function tryAgain() {
+  gameStarted = false;
+  finished    = false;
+  balloons.forEach(b => scene.remove(b.group));
+  balloons.length = 0;
+  collected = 0;
+  $finish.style.display = 'none';
+  $lost.style.display   = 'none';
+  $tmr.classList.remove('danger');
+  $tmr.textContent = '2:00.0';
+  $bal.textContent = '';
+  document.getElementById('start').style.display = 'flex';
+}
+
+function updateHUD(now) {
+  const kmh = Math.abs(P.speed) * 3.6;
+  $spd.textContent = (kmh < 1 ? 0 : Math.round(kmh)) + ' km/h';
+  $bal.textContent = gameStarted ? `Balloons: ${collected} / ${BALLOON_COUNT}` : '';
+
+  if (gameStarted && !finished) {
+    const elapsed    = (now - startTime) / 1000;
+    const remaining  = Math.max(0, TIME_LIMIT - elapsed);
+    $tmr.textContent = formatTime(remaining);
+    $tmr.classList.toggle('danger', remaining < 30);
+
+    if (remaining === 0) {
+      finished = true;
+      showLost();
+    }
+  }
+
+  _upV.set(0, 1, 0).applyQuaternion(carGroup.quaternion);
+  if (_upV.y < -0.25) {
+    $sts.textContent = 'FLIPPED — press R to reset';
+  } else {
+    $sts.textContent = '';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  GAME LOOP
+// ═══════════════════════════════════════════════════════════════════════════════
+let prevTime  = null;
+let startTime = null;   // ms timestamp set by startGame()
+let finished  = false;
+
+function tick(now) {
+  requestAnimationFrame(tick);
+  if (!prevTime) { prevTime = now; return; }
+  const dt = Math.min((now - prevTime) / 1000, 0.05);
+  prevTime = now;
+
+  if (gameStarted) {
+    updateCar(dt);
+    updateBalloons(dt);
+  }
+  updateCamera(dt);
+  updateHUD(now);
+  renderer.render(scene, camera);
+}
+
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
