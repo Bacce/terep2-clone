@@ -807,7 +807,7 @@ let wheelSpinAngle = 0;
 let prevTime = -1;
 
 // ─── Camera state ────────────────────────────────────────────────────────────
-const CAM_BACK = 14, CAM_UP = 6;
+const CAM_BACK = 14, CAM_UP = 8;
 const camTarget = new THREE.Vector3();
 const camIdeal  = new THREE.Vector3();
 
@@ -1253,7 +1253,11 @@ function tick(now) {
   );
   camera.position.lerp(camIdeal, Math.min(1, 8 * dt));
 
-  camTarget.lerp(chassisMesh.position, Math.min(1, 12 * dt));
+  _tmpV3.copy(chassisMesh.position);
+  _tmpV3.x += _chassisFwd.x * 8;
+  _tmpV3.y += 1.5;
+  _tmpV3.z += _chassisFwd.z * 8;
+  camTarget.lerp(_tmpV3, Math.min(1, 12 * dt));
   camera.lookAt(camTarget);
 
   fpsFrames++;
