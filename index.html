@@ -20,16 +20,17 @@
               color: rgba(255,255,255,.40); font-size: 11px;
               pointer-events: none; white-space: nowrap; }
     #finish { display: none; position: fixed; inset: 0;
-              background: rgba(0,0,0,.78);
+              background: rgba(0,0,0,.78); padding: 20px;
               flex-direction: column; align-items: center; justify-content: center;
               z-index: 10; pointer-events: none;
               font-family: 'Courier New', monospace;
               text-shadow: 0 2px 24px rgba(0,0,0,.95); }
-    #finish-title { font-size: 76px; font-weight: bold; color: #ffee00;
-                    letter-spacing: 10px; animation: pulse 1s ease-in-out infinite alternate; }
-    #finish-time  { font-size: 52px; color: #ffffff; margin-top: 22px; letter-spacing: 4px; }
-    #finish-label { font-size: 14px; color: #888; margin-top: 10px; letter-spacing: 4px; text-transform: uppercase; }
-    #finish-sub   { font-size: 16px; color: #aaddff; margin-top: 28px; letter-spacing: 2px; }
+    #finish-title { font-size: clamp(36px, 10vw, 76px); font-weight: bold; color: #ffee00;
+                    letter-spacing: clamp(4px, 1.5vw, 10px); text-align: center;
+                    animation: pulse 1s ease-in-out infinite alternate; }
+    #finish-time  { font-size: clamp(28px, 7vw, 52px); color: #ffffff; margin-top: 18px; letter-spacing: 3px; }
+    #finish-label { font-size: clamp(11px, 2.5vw, 14px); color: #888; margin-top: 10px; letter-spacing: 3px; text-transform: uppercase; }
+    #finish-sub   { font-size: clamp(12px, 2.5vw, 16px); color: #aaddff; margin-top: 22px; letter-spacing: 2px; text-align: center; }
     @keyframes pulse {
       from { text-shadow: 0 0 20px #ff8800, 0 2px 24px rgba(0,0,0,.95); }
       to   { text-shadow: 0 0 60px #ffcc00, 0 2px 24px rgba(0,0,0,.95); }
@@ -37,20 +38,23 @@
     /* ── Start screen ───────────────────────────────────────────────────────── */
     #start { position: fixed; inset: 0; background: rgba(0,0,5,.93);
              display: flex; flex-direction: column; align-items: center; justify-content: center;
+             padding: 20px;
              z-index: 20; font-family: 'Courier New', monospace; }
-    #start-logo  { font-size: 68px; font-weight: bold; color: #ffee00; letter-spacing: 8px;
-                   text-align: center;
+    #start-logo  { font-size: clamp(28px, 8vw, 68px); font-weight: bold; color: #ffee00;
+                   letter-spacing: clamp(3px, 1vw, 8px); text-align: center;
                    animation: pulse 1.2s ease-in-out infinite alternate; }
-    #start-sub   { font-size: 15px; color: #888; margin-top: 14px; letter-spacing: 3px; }
-    #start-btns  { display: flex; gap: 28px; margin-top: 52px; }
+    #start-sub   { font-size: clamp(11px, 2.5vw, 15px); color: #888; margin-top: 14px;
+                   letter-spacing: 2px; text-align: center; }
+    #start-btns  { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 36px;
+                   justify-content: center; width: 100%; max-width: 520px; }
     .diff-btn    { background: none; border: 2px solid; border-radius: 4px;
-                   padding: 20px 36px; cursor: pointer;
-                   font-family: 'Courier New', monospace; font-size: 20px;
+                   padding: 16px 24px; cursor: pointer; flex: 1 1 120px; min-width: 0;
+                   font-family: 'Courier New', monospace; font-size: clamp(14px, 3.5vw, 20px);
                    font-weight: bold; letter-spacing: 2px;
                    transition: background .15s, transform .12s; }
     .diff-btn:hover  { transform: scale(1.08); }
     .diff-btn:active { transform: scale(0.96); }
-    .diff-sub    { display: block; font-size: 11px; font-weight: normal;
+    .diff-sub    { display: block; font-size: clamp(9px, 2vw, 11px); font-weight: normal;
                    opacity: .65; margin-top: 7px; letter-spacing: 1px; }
     #btn-easy    { color: #44dd44; border-color: #44dd44; }
     #btn-easy:hover   { background: rgba(68,221,68,.14); }
@@ -60,13 +64,15 @@
     #btn-hard:hover   { background: rgba(255,68,68,.14); }
     /* ── Lost screen ────────────────────────────────────────────────────────── */
     #lost { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.82);
+            padding: 20px;
             flex-direction: column; align-items: center; justify-content: center;
             z-index: 10; font-family: 'Courier New', monospace;
             text-shadow: 0 2px 24px rgba(0,0,0,.95); }
-    #lost-title  { font-size: 76px; font-weight: bold; color: #ff3333;
-                   letter-spacing: 10px; animation: pulse-red 1s ease-in-out infinite alternate; }
-    #lost-sub    { font-size: 22px; color: #fff; margin-top: 20px; letter-spacing: 2px; }
-    #lost-detail { font-size: 15px; color: #aaa; margin-top: 10px; letter-spacing: 2px; }
+    #lost-title  { font-size: clamp(36px, 10vw, 76px); font-weight: bold; color: #ff3333;
+                   letter-spacing: clamp(4px, 1.5vw, 10px); text-align: center;
+                   animation: pulse-red 1s ease-in-out infinite alternate; }
+    #lost-sub    { font-size: clamp(14px, 3.5vw, 22px); color: #fff; margin-top: 16px; letter-spacing: 2px; text-align: center; }
+    #lost-detail { font-size: clamp(11px, 2.5vw, 15px); color: #aaa; margin-top: 10px; letter-spacing: 2px; text-align: center; }
     .replay-btn  { margin-top: 40px; background: none; border: 2px solid #fff; border-radius: 4px;
                    padding: 14px 40px; color: #fff; font-family: 'Courier New', monospace;
                    font-size: 16px; letter-spacing: 3px; cursor: pointer;
@@ -74,6 +80,34 @@
     .replay-btn:hover  { background: rgba(255,255,255,.12); transform: scale(1.07); }
     .replay-btn:active { transform: scale(0.96); }
     #timer.danger { color: #ff4444; }
+    /* ── Mobile controls ────────────────────────────────────────────────────── */
+    #mobile-zones { display: none; position: fixed; bottom: 0; left: 0; right: 0;
+                    height: 33.33vh; z-index: 4; pointer-events: none; }
+    .touch-zone  { position: absolute; display: flex;
+                   align-items: center; justify-content: center;
+                   border: 1px solid rgba(255,255,255,.08); }
+    /* Forward row — top 75% of the control strip */
+    .tz-fwd      { top: 0; height: 75%; }
+    .tz-fwd.left   { left: 0; width: 33.33%; background: rgba(255,255,255,.04);
+                     border-radius: 0 12px 0 0; }
+    .tz-fwd.center { left: 33.33%; width: 33.34%; background: rgba(255,255,255,.06); }
+    .tz-fwd.right  { right: 0; width: 33.33%; background: rgba(255,255,255,.04);
+                     border-radius: 12px 0 0 0; }
+    /* Reverse row — bottom 25% of the control strip */
+    .tz-rev      { bottom: 0; height: 25%;
+                   border-top: 1px solid rgba(255,255,255,.12); }
+    .tz-rev.left   { left: 0; width: 33.33%; background: rgba(255,80,80,.08); }
+    .tz-rev.center { left: 33.33%; width: 33.34%; background: rgba(255,80,80,.10); }
+    .tz-rev.right  { right: 0; width: 33.33%; background: rgba(255,80,80,.08); }
+    .touch-zone.active { background: rgba(255,238,0,.18) !important; }
+    .touch-zone.active .zone-hint,
+    .touch-zone.active .zone-hint-rev { color: rgba(255,238,0,.55); }
+    .zone-hint { font-family: 'Courier New', monospace;
+                 font-size: 10px; color: rgba(255,255,255,.25); pointer-events: none;
+                 letter-spacing: 1px; }
+    .zone-hint-rev { font-family: 'Courier New', monospace;
+                 font-size: 8px; color: rgba(255,150,150,.30); pointer-events: none;
+                 letter-spacing: 1px; }
     @keyframes pulse-red {
       from { text-shadow: 0 0 20px #cc0000, 0 2px 24px rgba(0,0,0,.95); }
       to   { text-shadow: 0 0 60px #ff6666, 0 2px 24px rgba(0,0,0,.95); }
@@ -104,6 +138,15 @@
   <div id="lost-sub">You ran out of time</div>
   <div id="lost-detail"></div>
   <button class="replay-btn" onclick="tryAgain()">TRY AGAIN</button>
+</div>
+
+<div id="mobile-zones">
+  <div class="touch-zone tz-fwd left"><span class="zone-hint">&#x25C0; LEFT</span></div>
+  <div class="touch-zone tz-fwd center"><span class="zone-hint">&#x25B2; FWD</span></div>
+  <div class="touch-zone tz-fwd right"><span class="zone-hint">RIGHT &#x25B6;</span></div>
+  <div class="touch-zone tz-rev left"><span class="zone-hint-rev">&#x25C0; REV</span></div>
+  <div class="touch-zone tz-rev center"><span class="zone-hint-rev">&#x25BC; REV</span></div>
+  <div class="touch-zone tz-rev right"><span class="zone-hint-rev">REV &#x25B6;</span></div>
 </div>
 
 <div id="start">
@@ -551,7 +594,7 @@ const ACC   = 18;    // m/s² forward thrust
 const ACC_R = 10;    // m/s² reverse thrust
 const FRIC  =  5;    // m/s² rolling resistance
 const HBRK  = 42;    // m/s² handbrake
-const MAXF  = 28;    // m/s  top forward speed (~100 km/h)
+const MAXF  = 33;    // m/s  top forward speed (~120 km/h)
 const MAXR  = 10;    // m/s  max reverse speed
 const GRAV  = 20;    // m/s²
 const MAX_STEER = 0.52;  // rad
@@ -568,10 +611,10 @@ const _wOffset    = new THREE.Vector3();
 const _carEuler   = new THREE.Euler(0, 0, 0, 'YXZ');
 
 function updateCar(dt) {
-  const fwd   = keys['KeyW'] || keys['ArrowUp'];
-  const bwd   = keys['KeyS'] || keys['ArrowDown'];
-  const left  = keys['KeyA'] || keys['ArrowLeft'];
-  const right = keys['KeyD'] || keys['ArrowRight'];
+  const fwd   = keys['KeyW'] || keys['ArrowUp']    || mobile.fwd;
+  const bwd   = keys['KeyS'] || keys['ArrowDown']  || mobile.bwd;
+  const left  = keys['KeyA'] || keys['ArrowLeft']   || mobile.left;
+  const right = keys['KeyD'] || keys['ArrowRight']  || mobile.right;
   const space = keys['Space'];
 
   // ── throttle / coast / brake ──────────────────────────────────────────────
@@ -725,6 +768,61 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  MOBILE INPUT — screen split into 3 vertical zones
+//    Left 33%  = turn left  + accelerate
+//    Middle 33% = accelerate (straight)
+//    Right 33% = turn right + accelerate
+// ═══════════════════════════════════════════════════════════════════════════════
+const mobile = { fwd: false, bwd: false, left: false, right: false };
+const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+if (isMobile) {
+  document.getElementById('mobile-zones').style.display = 'block';
+
+  const zoneFwdL = document.querySelector('.tz-fwd.left');
+  const zoneFwdC = document.querySelector('.tz-fwd.center');
+  const zoneFwdR = document.querySelector('.tz-fwd.right');
+  const zoneRevL = document.querySelector('.tz-rev.left');
+  const zoneRevC = document.querySelector('.tz-rev.center');
+  const zoneRevR = document.querySelector('.tz-rev.right');
+  const allZones = [zoneFwdL, zoneFwdC, zoneFwdR, zoneRevL, zoneRevC, zoneRevR];
+
+  function updateTouchZones(e) {
+    mobile.fwd = false; mobile.bwd = false; mobile.left = false; mobile.right = false;
+    allZones.forEach(z => z.classList.remove('active'));
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const stripTop = h * 2 / 3;       // top of control strip (bottom 33% of screen)
+    const revCut   = h - h / 3 * 0.25; // boundary between fwd and rev rows (75%/25% split)
+    for (let i = 0; i < e.touches.length; i++) {
+      const x = e.touches[i].clientX;
+      const y = e.touches[i].clientY;
+      if (y < stripTop) continue;
+      const isRev = y >= revCut;
+      if (isRev) mobile.bwd = true; else mobile.fwd = true;
+      const col = x < w / 3 ? 0 : x > w * 2 / 3 ? 2 : 1;
+      if (col === 0) mobile.left  = true;
+      if (col === 2) mobile.right = true;
+      // Highlight the active zone
+      const idx = (isRev ? 3 : 0) + col;
+      allZones[idx].classList.add('active');
+    }
+  }
+
+  function clearTouch() {
+    mobile.fwd = false; mobile.bwd = false; mobile.left = false; mobile.right = false;
+    allZones.forEach(z => z.classList.remove('active'));
+  }
+
+  const canvas = renderer.domElement;
+  canvas.addEventListener('touchstart', e => { updateTouchZones(e); e.preventDefault(); }, { passive: false });
+  canvas.addEventListener('touchmove',  e => { updateTouchZones(e); e.preventDefault(); }, { passive: false });
+  canvas.addEventListener('touchend',   e => { if (e.touches.length === 0) clearTouch(); else updateTouchZones(e); });
+  canvas.addEventListener('touchcancel', clearTouch);
+
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  CAMERA — smooth third-person follow
 // ═══════════════════════════════════════════════════════════════════════════════
 const camPos    = new THREE.Vector3(0, 10, -20);
@@ -855,7 +953,7 @@ let finished  = false;
 function tick(now) {
   requestAnimationFrame(tick);
   if (!prevTime) { prevTime = now; return; }
-  const dt = Math.min((now - prevTime) / 1000, 0.05);
+  const dt = Math.min((now - prevTime) / 1000, 0.05) * 0.8;
   prevTime = now;
 
   if (gameStarted) {
